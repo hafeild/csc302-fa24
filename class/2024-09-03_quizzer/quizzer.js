@@ -7,7 +7,9 @@ $(document).ready(function(){
     $(document).on('click', '.remove-question', removeQuestion);
     $(document).on('click', '#save-quiz', saveQuiz);
     // TODO: handle quiz reset
+    $(document).on('click', '#reset-quiz', saveQuiz);
     // TODO: handle quiz check
+    $(document).on('click', '#check-quiz', checkQuiz);
 });
 
 /**
@@ -74,6 +76,18 @@ function checkQuiz(){
     var correct = 0;
     $('#quiz .response').each(function(i, elm){
         // TODO: check the answer and mark it as correct/incorrect.
+        var $row = $(elm).parents('li')
+
+        // Check the value of the .response textarea against the solution.
+        var response = $(elm).val();
+        var questionIndex = parseInt($row.data('id'));
+        // questions[questionIndex]['answer']
+        if(response == questions[questionIndex].answer){
+            $row.addClass('correct');
+            correct++;
+        } else {
+            $row.addClass('incorrect');
+        }
     });
     $('#score').html(`Score: ${correct}/${questions.length} = ${correct/questions.length}`);
 }
