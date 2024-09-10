@@ -119,7 +119,7 @@ function checkQuiz(){
  */
 function loadList(){
     //if(localStorage.getItem('questions') !== null){ <-- this will trigger if there is a key called 'questions' in the local storage, even if the value is blank
-    if(localStorage.getItem('questions'){ // <-- this will trigger if there is a key called 'questions' in the local storage, and the value isn't undefined, null, or blank; we could add better safety checks here (make sure it's an array and formatted as we want it to).
+    if(localStorage.getItem('questions')){ // <-- this will trigger if there is a key called 'questions' in the local storage, and the value isn't undefined, null, or blank; we could add better safety checks here (make sure it's an array and formatted as we want it to).
         questions = JSON.parse(localStorage.getItem('questions'));
         populateQuiz(questions);
         populateQuizAdmin(questions);
