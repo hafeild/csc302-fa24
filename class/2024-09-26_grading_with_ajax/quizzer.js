@@ -10,7 +10,7 @@ $(document).ready(function(){
     // TODO: handle quiz reset
     $(document).on('click', '#reset-quiz', saveQuiz);
     // TODO: handle quiz check
-    // $(document).on('click', '#check-quiz', checkQuiz);
+    $(document).on('click', '#check-quiz', checkQuiz);
 
     $(window).on('hashchange', function(){
         var mode = window.location.hash.match(/^#?([^?]*)/)[1]; 
@@ -107,24 +107,59 @@ function removeQuestion(){
  * Checks each of the answers in the quiz and marks them as correct/incorrect.
  * Also tallies up a score and records it.
  */
-function checkQuiz(){
-    var correct = 0;
-    $('#quiz .response').each(function(i, elm){
-        // TODO: check the answer and mark it as correct/incorrect.
-        var $row = $(elm).parents('li')
+function checkQuiz(event){
+    event.preventDefault();
 
-        // Check the value of the .response textarea against the solution.
-        var response = $(elm).val();
-        var questionIndex = parseInt($row.data('id'));
-        // questions[questionIndex]['answer']
-        if(response == questions[questionIndex].answer){
-            $row.addClass('correct');
-            correct++;
-        } else {
-            $row.addClass('incorrect');
+    var serializedResponses = $('#response-form').serialize();
+    console.log(serializedResponses);
+
+    // Call the server to check the answers.
+    $.ajax('grade.php',{
+        method: 'GET',
+        dataType: 'json',
+        data: serializedResponses,
+        success: function(data){
+            // data is an object with question-id <=> correct/incorrect pairs.
+            console.log(data);
+
+            
+            $('#quiz .response').each(function(i, elm){
+                var $response = $(elm);
+                // TODO: check the answer and mark it as correct/incorrect.
+                var $row = $(elm).parents('li')
+                var questionId = $response.attr('name');
+
+                console.log('examining', questionId);
+
+                if(data[questionId] != undefined){
+                    $row.addClass(data[questionId]);
+                }
+
+            });
+            // $('#score').html(data);
         }
     });
-    $('#score').html(`Score: ${correct}/${questions.length} = ${correct/questions.length}`);
+
+
+    // var correct = 0;
+    // $('#quiz .response').each(function(i, elm){
+    //     // TODO: check the answer and mark it as correct/incorrect.
+    //     var $row = $(elm).parents('li')
+
+    //     // Check the value of the .response textarea against the solution.
+    //     var response = $(elm).val();
+    //     var questionIndex = parseInt($row.data('id'));
+    //     // questions[questionIndex]['answer']
+    //     if(response == questions[questionIndex].answer){
+    //         $row.addClass('correct');
+    //         correct++;
+    //     } else {
+    //         $row.addClass('incorrect');
+    //     }
+    // });
+    // $('#score').html(`Score: ${correct}/${questions.length} = ${correct/questions.length}`);
+
+    return 0;
 }
 
 /**

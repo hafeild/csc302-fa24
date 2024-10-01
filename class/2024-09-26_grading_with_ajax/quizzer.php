@@ -63,7 +63,7 @@ require_once("questions.php");
     <div id="quiz-panel" class="panel quizzer">
         <h2>Quiz</h2>
         <span id="score"></span>
-        <form>
+        <form id="response-form">
             <ol id="quiz">
             
             <?php
