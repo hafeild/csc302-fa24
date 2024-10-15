@@ -62,7 +62,7 @@ function createTables(){
             'authorId integer, '.
             'name text, '. 
             'createdAt datetime default(datetime()), '.
-            'updatedAt datetime default(datetime())), '.
+            'updatedAt datetime default(datetime()), '.
             'foreign key(authorId) references Users(id))');
     } catch(PDOException $e){
         echo "There was an error creating the Quizzes table: $e";
@@ -106,6 +106,76 @@ function createTables(){
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// Users functions
+////////////////////////////////////////////////////////////////////////////////
+/**
+ * Adds a user to the database.
+ * 
+ * @param $username The username to add.
+ * 
+ * @return One of: {"success": true, "id": <id of new user>} or 
+ *  {"success": false, "error": <error message>}. 
+ */
+function addUser($username){
+    global $dbh;
+    $id = null;
+    try {
+        $statement = $dbh->prepare(
+            'insert into Users(username) values (:username)');
+        $statement->execute([
+            ':username' => $username
+        ]);
+
+        $id = $dbh->lastInsertId();
+    } catch(PDOException $e){
+        return error("There was an error adding a user: $e");
+    }
+
+    return [
+        'success' => true,
+        'id' => $id
+    ];
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Quizzes functions
+////////////////////////////////////////////////////////////////////////////////
+/**
+ * Adds a quiz to the database.
+ * 
+ * @param $name The name of the quiz.
+ * @param $authorId The id of the user who created the quiz.
+ * 
+ * @return One of: {"success": true, "id": <id of new quiz>} or 
+ *  {"success": false, "error": <error message>}. 
+ */
+function addQuiz($name, $authorId){
+    global $dbh;
+    $id = null;
+    try {
+        $statement = $dbh->prepare(
+            'insert into Quizzes(name, authorId) values (:name, :authorId)');
+        $statement->execute([
+            ':name' => $name,
+            ':authorId' => $authorId
+        ]);
+
+        $id = $dbh->lastInsertId();
+    } catch(PDOException $e){
+        return error("There was an error adding a quiz: $e");
+    }
+
+    return [
+        'success' => true,
+        'id' => $id
+    ];
+}
+////////////////////////////////////////////////////////////////////////////////
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // QuizItems functions
@@ -113,20 +183,22 @@ function createTables(){
 /**
  * Adds a quiz item to the database.
  * 
+ * @param $quizId The quiz this quiz item is associated with.
  * @param $question The question to add.
  * @param $answer The answer to add.
  * 
  * @return One of: {"success": true, "id": <id of new quiz item>} or 
  *  {"success": false, "error": <error message>}. 
  */
-function addQuizItem($question, $answer){
+function addQuizItem($quizId, $question, $answer){
     global $dbh;
     $id = null;
     try {
         $statement = $dbh->prepare(
-            'insert into QuizItems(question, answer) '.
-            'values (:question, :answer)');
+            'insert into QuizItems(quizId, question, answer) '.
+            'values (:quizId, :question, :answer)');
         $statement->execute([
+            ':quizId' => $quizId, 
             ':question' => $question, 
             ':answer'  => $answer
         ]);
@@ -174,6 +246,13 @@ function getQuizItems(){
     ];
 }
 
+/**
+ * Removes a quiz item from the database.
+ * 
+ * @param $quizItemId The id of the quiz item to remove.
+ * 
+ * @return One of: {"success": true} or {"success": false, "error": <error message>}.
+ */
 function removeQuizItem($quizItemId){
     global $dbh;
     $quizItems = [];
@@ -189,15 +268,25 @@ function removeQuizItem($quizItemId){
     ];
 }
 
-
-function updateQuizItem($quizItemId, $question, $answer){
+/**
+ * Updates a quiz item in the database.
+ * 
+ * @param $quizItemId The id of the quiz item to update.
+ * @param $question The new question.
+ * @param $answer The new answer.
+ * 
+ * @return One of: {"success": true} or {"success": false, "error": <error message>}.
+ */
+function updateQuizItem($quizItemId, $quizId, $question, $answer){
     global $dbh;
     $quizItems = [];
     try {
         $statement = $dbh->prepare('update QuizItems set question = :question, '. 
+            'quizId = :quizId, '.
             'answer = :answer, updatedAt = datetime("now") where id = :id');
         $statement->execute([
             ':id' => $quizItemId,
+            ':quizId' => $quizId,
             ':question' => $question,
             ':answer' => $answer
         ]);
@@ -220,20 +309,24 @@ function updateQuizItem($quizItemId, $question, $answer){
 /**
  * Adds a submission to the database.
  * 
+ * @param $submiterId The id of the user who submitted the quiz.
+ * @param $quizId The id of the quiz the user submitted.
  * @param $questionCount The total number of questions in the quiz.
  * @param $correct The number of questions the user answered correctly.
  *  
  * @return One of: {"success": true, "id": <id of new submission item>} or 
  *  {"success": false, "error": <error message>}. 
  */
-function addSubmission($questionCount, $correct){
+function addSubmission($submiterId, $quizId, $questionCount, $correct){
     global $dbh;
     $id = null;
     try {
         $statement = $dbh->prepare(
-            'insert into Submissions(score, questionCount, correct) '.
-            'values (:score, :questionCount, :correct)');
+            'insert into Submissions(submitterId, quizId, score, questionCount, correct) '.
+            'values (:submitterId, :quizId, :score, :questionCount, :correct)');
         $statement->execute([
+            ':submitterId' => $submiterId,
+            ':quizId' => $quizId,
             ':score' => $correct / $questionCount,
             ':questionCount' => $questionCount,
             ':correct' => $correct
@@ -258,6 +351,8 @@ function addSubmission($questionCount, $correct){
  * "submissions": <submissions>}, where <submissions> is an array of submissions; 
  * each element is an associative array that contains the following data:
  *     - id: The id of the submission.
+ *     - submitterId: The id of the user who submitted the quiz.
+ *     - quizId: The id of the quiz the user submitted.
  *     - score: The score of the submission.
  *     - total: The total number of questions in the quiz.
  *     - correct: The number of questions the user answered correctly.

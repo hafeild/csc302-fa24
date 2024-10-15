@@ -63,6 +63,27 @@
 
 </head>
 <body>
+    <div class="action-wrapper">
+        <h1>Add user</h1>
+        <form>
+            <input type="hidden" name="action" value="addUser"/>
+            Username: <input type="text" name="username"/><br/>
+            <input type="submit" value="Add user"/>
+        </form>
+        <textarea class="output"></textarea>
+    </div>
+
+    <div class="action-wrapper">
+        <h1>Add quiz</h1>
+        <form>
+            <input type="hidden" name="action" value="addQuiz"/>
+            Author id: <input type="text" name="authorId"/><br/>
+            Quiz name: <input type="text" name="name"/><br/>
+            <input type="submit" value="Add quiz"/>
+        </form>
+        <textarea class="output"></textarea>
+    </div>
+
 
     <div class="action-wrapper">
         <h1>Get quiz items</h1>
@@ -77,6 +98,7 @@
         <h1>Add quiz item</h1>
         <form>
             <input type="hidden" name="action" value="addQuizItem"/>
+            Quiz Id: <input type="text" name="quizId"/><br/>
             Question: <input type="text" name="question"/><br/>
             Answer: <input type="text" name="answer"/><br/>
             <input type="submit" value="Add quiz item"/>
@@ -100,6 +122,7 @@
         <form>
             <input type="hidden" name="action" value="updateQuizItem"/>
             ID: <input type="text" name="quizItemId"/><br/>
+            quizId: <input type="text" name="quizId"/><br/>
             Question: <input type="text" name="question"/><br/>
             Answer: <input type="text" name="answer"/><br/>
             <input type="submit" value="Update quiz item"/>

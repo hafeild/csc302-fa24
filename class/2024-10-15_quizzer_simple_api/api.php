@@ -16,14 +16,22 @@ if(array_key_exists('action', $_POST)){
 
 
     } else if($action == 'addQuizItem'){
-        echo json_encode(addQuizItem($_POST['question'], $_POST['answer']));
+        echo json_encode(addQuizItem($_POST['quizId'], $_POST['question'], $_POST['answer']));
 
     } else if($action == 'removeQuizItem') {
         echo json_encode(removeQuizItem($_POST['quizItemId']));
 
 
     } else if($action == 'updateQuizItem'){
-        echo json_encode(updateQuizItem($_POST['quizItemId'], $_POST['question'], $_POST['answer']));
+        echo json_encode(updateQuizItem($_POST['quizItemId'], $_POST['quizId'], $_POST['question'], $_POST['answer']));
+
+    } else if($action == 'addUser'){
+        echo json_encode(addUser($_POST['username']));
+
+    } else if($action == 'addQuiz'){
+        echo json_encode(addQuiz($_POST['name'], $_POST['authorId']));
+
+
 
 
     } else {
