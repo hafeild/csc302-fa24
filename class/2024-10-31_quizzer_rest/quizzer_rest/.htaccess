@@ -1,0 +1,23 @@
+## Required for doing rewrites.
+Options FollowSymLinks
+
+
+## Default index for this directory is router.php.
+#DirectoryIndex router.php
+
+RewriteEngine On
+
+
+## Get the URI base -- we'll need this later.
+RewriteCond %{REQUEST_URI}::$1 ^(.*?/)(.*)::\2$
+RewriteRule ^(.*)$ - [E=BASE:%1]
+
+
+## Serve directories or files beyond this point only if they exist.
+RewriteCond %{REQUEST_FILENAME}  -d [OR]
+RewriteCond %{REQUEST_FILENAME}  -f 
+RewriteRule  ^  -  [L]
+
+## Otherwise, rewrite URIs so they all go to router.php.
+RewriteRule ^(.*)$  /%{ENV:BASE}/router.php/$1 [L]
+
