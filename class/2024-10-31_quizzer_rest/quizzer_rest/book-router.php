@@ -12,7 +12,6 @@ if(file_exists(".". $_SERVER['REQUEST_URI'])){
     return false;
 }
 
-require_once('db.php');
 
 header('Content-type: application/json');
 
@@ -20,25 +19,67 @@ header('Content-type: application/json');
 error_reporting(E_ALL);
 ini_set('display_errors', '1');
 
+// TODO Change this as needed. SQLite will look for a file with this name, or
+// create one if it can't find it.
+$dbName = 'library-v1.db';
+
+// Leave this alone. It checks if you have a directory named www-data in
+// you home directory (on a *nix server). If so, the database file is
+// sought/created there. Otherwise, it uses the current directory.
+// The former works on digdug where I've set up the www-data folder for you;
+// the latter should work on your computer.
+$matches = [];
+preg_match('#^/~([^/]*)#', $_SERVER['REQUEST_URI'], $matches);
+$homeDir = count($matches) > 1 ? $matches[1] : '';
+$dataDir = "/home/$homeDir/www-data";
+if(!file_exists($dataDir)){
+    $dataDir = __DIR__;
+}
+$dbh = new PDO("sqlite:$dataDir/$dbName")   ;
+// Set our PDO instance to raise exceptions when errors are encountered.
+$dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+createTables();
+
+
+    // if($action == 'add-book'){
+    //     addBook($_POST);
+    // } else if($action == 'add-patron') {
+    //     addPatron($_POST);
+    // } else if($action == 'checkout-book'){
+    //     checkoutBook($_POST);
+    // } else if($action == 'return-book'){
+    //     returnBook($_POST);
+    // } else if($action == 'get-overdue-books'){
+    //     getOverDueBooks($_POST);
+    // } else if($action == 'get-books'){
+    //     getTable('Books');
+    // } else if($action == 'get-book'){
+    //     getTableRow('Books', $_POST);
+    // } else if($action == 'get-patrons'){
+    //     getTable('Patrons');
+    // } else if($action == 'get-patron'){
+    //     getTableRow('Patrons', $_POST);
+    // } else if($action == 'get-checkouts'){
+    //     getTable('Checkouts');
+    // } else if($action == 'get-checkout'){
+    //     getTableRow('Checkouts', $_POST);
+
 // Routes.
 $routes = [
-    // Quizzes.
-    makeRoute("POST", "#^/quizzes/?(\?.*)?$#", "addQuizController"),
-    makeRoute("GET", "#^/quizzes/?(\?.*)?$#", "getQuizzesController"),
-    makeRoute("GET", "#^/quizzes/(\w+)/?(\?.*)?$#", "getQuizController"),
+    // Books.
+    makeRoute("POST", "#^/books/?(\?.*)?$#", "addBook"),
+    makeRoute("GET", "#^/books/?(\?.*)?$#", "getBooks"),
+    makeRoute("GET", "#^/books/(\w+)/?(\?.*)?$#", "getBook"),
 
-    // QuizItems.
-    # /quizzes/:quizId/quizitems
-    makeRoute("POST", "#^/quizzes/(\w+)/quizitems/?(\?.*)?$#", "addQuizItemController"),
-    makeRoute("GET", "#^/quizzes/(\w+)/quizitems/?(\?.*)?$#", "getQuizItemsController"),
-    
-    makeRoute("DELETE", "#^/quizzes/(\w+)/quizitems/(\w+)/?(\?.*)?$#", "removeQuizItemController"),
-    makeRoute("PATCH", "#^/quizzes/(\w+)/quizitems/(\w+)/?(\?.*)?$#", "removeQuizItemController"),
+    // Patrons -- the handlers for these need to be re-vamped.
+    makeRoute("POST", "#^/patrons/?(\?.*)?$#", "addPatron"),
+    makeRoute("GET", "#^/patrons/?(\?.*)?$#", "getPatrons"),
+    makeRoute("GET", "#^/patrons/(\w+)/?(\?.*)?$#", "getPatron"),
 
 
-    // Users.
-
-    // Submissions.
+    // Checkouts.
+    // TODO
 ];
 
 // Initial request processing.
@@ -87,25 +128,6 @@ if(!$foundMatchingRoute){
 ////////////////////////////////////////////////////////////////////////////////
 // FUNCTIONS
 ////////////////////////////////////////////////////////////////////////////////
-
-
-function addQuizController($uri, $matches, $data){
-    global $prefix;
-
-    signedInOrDie();
-    $quizInfo = addQuiz($data['name'], $data['authorId']);
-    created("$prefix/quizzes/". $quizInfo['id'], $quizInfo);
-
-}
-
-function removeQuizItemController($uri, $matches, $data){
-    global $prefix;
-
-    signedInOrDie();
-    $response = removeQuizItem($matches[2]);
-    success($response);
-}
-
 
 /**
  * Creates these tables if they don't already exist:
