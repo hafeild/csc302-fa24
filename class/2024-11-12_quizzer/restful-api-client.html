@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple API demo</title>
+    <style>
+        table, tr, td, th {
+            border: 1px solid gray;
+        }
+
+        .output {
+            width: 80em;
+            height: 10em;
+        }
+
+        .highlight {
+            border: 2px solid lightgreen;
+        }
+
+        .error {
+            border-color: red;
+        }
+    </style>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>
+        var headers = {};
+
+        $(document).ready(function(){
+            // Load jwt from localStorage if present.
+            if(localStorage.jwt){
+                headers.Authorization = `Bearer ${localStorage.jwt}`;
+            }
+
+            $(document).on('submit', 'form', function(event){
+                var $form = $(this);
+                var $outputBox = $(this).siblings('.output');
+                var uri = $form.attr('action');
+
+                console.log('uri before', uri);
+                // If the form includes an id input, append that to the URI.
+                var idInput = $form.find('[name=id]');
+                if(idInput.length > 0){
+                    uri = uri.replace(':id', idInput.val());
+                }
+                console.log('uri after', uri);
+
+                $.ajax({
+                    // TODO -- specify headers.
+                    headers: headers,
+                    url: uri,
+                    // Ignores any fields that include the class "ignore".
+                    data: $form.find('input').not('.ignore').serialize(),
+                    method: $form.attr('method'),
+                    success: function(data, status, jqXHR){
+                        console.log(data);
+                        // Pretty print the data.
+                        if(jqXHR.getResponseHeader('Location')){
+                            $outputBox.html(`[${jqXHR.status}]\n`+ 
+                                `[Location: ${jqXHR.getResponseHeader('Location')}]\n`+
+                                JSON.stringify(data, null, 2));
+                        } else {
+                            $outputBox.html(`[${jqXHR.status}]\n`+ 
+                                JSON.stringify(data, null, 2));
+                        }
+
+                        // Store the JWT and set the headers.
+                        if(data.jwt){
+                            headers.Authorization = `Bearer ${data.jwt}`;
+                            localStorage.jwt = data.jwt;
+                        }
+
+                        $outputBox.addClass('highlight');
+                    },
+                    error: function(jqXHR, status, error){
+                        $outputBox.html(`[${jqXHR.status}]\n${jqXHR.responseText}`);
+                        $outputBox.addClass('highlight').addClass('error');
+                    }, 
+
+                });
+
+                // Remove highlighting during request.
+                $('.highlight').removeClass('highlight').removeClass('error');
+
+                event.preventDefault();
+                return false;
+            });
+
+            // Handle signing out.
+            $(document).on('click', '#signout', function(){
+                // TODO 2 -- what needs to happen here?
+                // (remove jwt from localStorage and from the list of headers
+                //  we pass to $.ajax)
+
+                $(this).siblings('.output').html(
+                    `localStorage.jwt: ${localStorage.jwt}\n`+
+                    `headers: ${JSON.stringify(headers)}`);
+            });
+        });
+    </script>
+</head>
+<body>
+    <div class="action-wrapper">
+        <h1>Sign in</h1>
+        <form action="tokens" method="post">
+            <input type="hidden" name="_method" value="post"/>
+            Username: <input type="text" name="username"/><br/>
+            Password: <input type="password" name="password"/><br/>
+            <input type="submit" value="Sign in"/>
+        </form>
+        <textarea class="output"></textarea>
+    </div>
+
+    <div class="action-wrapper">
+        <h1>Sign out</h1>
+        <form>
+            <input type="hidden" name="action" value="signout"/>
+            <input type="submit" value="Sign out"/>
+        </form>
+        <textarea class="output"></textarea>
+    </div>
+
+    <div class="action-wrapper">
+        <h1>Add user</h1>
+        <form>
+            <input type="hidden" name="action" value="addUser"/>
+            Username: <input type="text" name="username"/><br/>
+            Password: <input type="password" name="password"/><br/>
+            <input type="submit" value="Add user"/>
+        </form>
+        <textarea class="output"></textarea>
+    </div>
+
+    <div class="action-wrapper">
+        <h1>Add quiz</h1>
+        <form>
+            <input type="hidden" name="action" value="addQuiz"/>
+            
+            Username: <input type="text" name="username"/><br/>
+            Password: <input type="password" name="password"/><br/>
+
+            Author id: <input type="text" name="authorId"/><br/>
+            Quiz name: <input type="text" name="name"/><br/>
+            <input type="submit" value="Add quiz"/>
+        </form>
+        <textarea class="output"></textarea>
+    </div>
+
+
+    <div class="action-wrapper">
+        <h1>Get quiz items</h1>
+        <form>
+            <input type="hidden" name="action" value="getQuizItems"/>
+
+            Username: <input type="text" name="username"/><br/>
+            Password: <input type="password" name="password"/><br/>
+
+            <input type="submit" value="Get quiz items"/>
+        </form>
+        <textarea class="output"></textarea>
+    </div>
+
+    <div class="action-wrapper">
+        <h1>Add quiz item</h1>
+        <form>
+            <input type="hidden" name="action" value="addQuizItem"/>
+            Username: <input type="text" name="username"/><br/>
+            Password: <input type="password" name="password"/><br/>
+            Quiz Id: <input type="text" name="quizId"/><br/>
+            Question: <input type="text" name="question"/><br/>
+            Answer: <input type="text" name="answer"/><br/>
+            <input type="submit" value="Add quiz item"/>
+        </form>
+        <textarea class="output"></textarea>
+    </div>
+
+
+    <div class="action-wrapper">
+        <h1>Remove quiz Item</h1>
+        <form>
+            <input type="hidden" name="action" value="removeQuizItem"/>
+            Username: <input type="text" name="username"/><br/>
+            Password: <input type="password" name="password"/><br/>
+            ID: <input type="text" name="quizItemId"/><br/>
+            <input type="submit" value="Remove quiz item"/>
+        </form>
+        <textarea class="output"></textarea>
+    </div>
+
+    <div class="action-wrapper">
+        <h1>Update quiz Item</h1>
+        <form>
+            <input type="hidden" name="action" value="updateQuizItem"/>
+            Username: <input type="text" name="username"/><br/>
+            Password: <input type="password" name="password"/><br/>
+            ID: <input type="text" name="quizItemId"/><br/>
+            Quiz Id: <input type="text" name="quizId"/><br/>
+            Question: <input type="text" name="question"/><br/>
+            Answer: <input type="text" name="answer"/><br/>
+            <input type="submit" value="Update quiz item"/>
+        </form>
+        <textarea class="output"></textarea>
+    </div>
+
+    <div class="action-wrapper">
+        <h1>Submit Responses</h1>
+        <form>
+            <input type="hidden" name="action" value="submitResponses"/>
+            Username: <input type="text" name="username"/><br/>
+            Password: <input type="password" name="password"/><br/>
+            Submitter username: <input type="text" name="submitterUsername"/><br/>
+            <!-- Submitter ID: <input type="text" name="submitterId"/><br/> -->
+            Quiz ID: <input type="text" name="quizId"/><br/>
+            Responses (JSON array of objects with fields "quizItemId" and "response"):<br/>
+            <textarea class="json-input" name="responses"></textarea><br/>
+            <input type="submit" value="Submit responses"/>
+        </form>
+        <textarea class="output"></textarea>
+    </div>
+
+    <div class="action-wrapper">
+        <h1>Get submissions</h1>
+        <form>
+            <input type="hidden" name="action" value="getSubmissions"/>
+            Username: <input type="text" name="username"/><br/>
+            Password: <input type="password" name="password"/><br/>
+            <input type="submit" value="Get submissions"/>
+        </form>
+        <textarea class="output"></textarea>
+    </div>
+
+</body>
+</html>
